@@ -1,29 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   pipex.h                                            :+:      :+:    :+:   */
+/*   utils.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pifourni <pifourni@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/11/20 14:16:16 by pifourni          #+#    #+#             */
-/*   Updated: 2025/11/20 17:18:47 by pifourni         ###   ########.fr       */
+/*   Created: 2025/11/20 23:07:49 by pifourni          #+#    #+#             */
+/*   Updated: 2025/11/20 23:07:50 by pifourni         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PIPEX_H
-# define PIPEX_H
+#include "pipex.h"
 
-# include <unistd.h>
-# include <stdio.h>
-# include <sys/wait.h>
-# include <fcntl.h>
-# include <errno.h>
-# include <string.h>
-# include <stdlib.h>
+size_t  ft_strlen(char *s)
+{
+    size_t  i;
 
-char	**ft_split(char const *s, char c);
-size_t  ft_strlen(char *s);
-int		error1(int fd1, int fd2, char *err);
-int     error2(int fd1, int fd2, char *err, pid_t pid);
-
-#endif
+    i = 0;
+    while (s[i])
+        i++;
+    return (i);
+}
