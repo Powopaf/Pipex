@@ -18,6 +18,38 @@ static void	exec_cmd(char* cmd, char **arg, char **envp)
 
 static void	command2(char *file2, char *cmd2, char **envp, int pip[2])
 {
+	int		fd;
+	char	**cmd;
+
+	fd = open(file2, O_WRONLY);
+	if (fd == -1)
+	{
+		perror("\x1b[91mError: open(file2)\x1b[0m");
+		exit(1);
+	}
+	if (dup2(pip[0], STDIN_FILENO) == -1)
+	{
+		perror("\x1b[91mError: dup2(pip0, in)\x1b[0m");
+		close(fd);
+		exit(1);
+	}
+	if (dup2(fd, STDOUT_FILENO) == -1)
+	{
+		perror("\x1b[91mError: dup2(fd, out)\x1b[0m");
+		close(fd);
+		exit(1);
+	}
+	close(fd);
+	close(pip[0]);
+	close(pip[1]);
+	cmd = ft_split(cmd2, ' ');
+	if (!cmd || !*cmd)
+	{
+		write(2, "\x1b[91mERROR: ft_split(cmd2)\x1b[0m\n", 26);
+		exit(1);
+	}
+	exec_cmd(cmd[0], cmd, envp);
+	exit(1);
 }
 
 static void	command1(char *file1, char *cmd1, char **envp, int pip[2])
@@ -49,7 +81,7 @@ static void	command1(char *file1, char *cmd1, char **envp, int pip[2])
 	cmd = ft_split(cmd1, ' ');
 	if (!cmd || !*cmd)
 	{
-		write(2, "\x1b[91mERROR: ft_split\x1b[0m\n", 26);
+		write(2, "\x1b[91mERROR: ft_split(cmd1)\x1b[0m\n", 26);
 		exit(1);
 	}
 	exec_cmd(cmd[0], cmd, envp);
