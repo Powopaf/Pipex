@@ -16,7 +16,7 @@ static void	exec_cmd(char *cmd, char **arg, char **envp)
 {
 	int	i;
 
-	execve(cmd, arg, envp);
+	execve(path(cmd, envp), arg, envp);
 	perror("\x1b[91mError: execve()\x1b[0m");
 	i = 0;
 	while (arg[i] != NULL)

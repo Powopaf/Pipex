@@ -10,21 +10,28 @@
 #                                                                              #
 # **************************************************************************** #
 
+.PHONY: all clean fclean re
+
 CC = cc
 CFLAGS = -Wall -Wextra -Werror -g -fsanitize=address
-LIB = -fsanitize=address
+LIB = -fsanitize=address libft/libft.a
 SRC = ./pipex.c \
 	  ./utils.c \
-	  ./ft_split.c \
 	  ./error.c
 
 OBJ = $(SRC:.c=.o)
 
 NAME = pipex
 
-all: $(NAME)
+all: libft/libft.a $(NAME)
+	@echo -e '\033[32mPipex compiled successfully!\033[0m'
 
-$(NAME): $(OBJ)
+libft/libft.a:
+	@echo -e '\033[34mCompiling libft...\033[0m'
+	${MAKE} -C ./libft
+	@echo -e '\033[32mlibft compiled successfully!\033[0m'
+
+$(NAME): $(OBJ) libft/libft.a
 	$(CC) -o $(NAME) $+ $(LIB)
 
 %.o: %.c
@@ -32,8 +39,10 @@ $(NAME): $(OBJ)
 
 clean:
 	rm -f $(OBJ)
+	${MAKE} -C ./libft clean
 
 fclean: clean
 	rm -f $(NAME)
+	${MAKE} -C ./libft fclean
 
 re: fclean all
