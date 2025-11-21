@@ -6,7 +6,7 @@
 /*   By: pifourni <pifourni@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/20 14:16:16 by pifourni          #+#    #+#             */
-/*   Updated: 2025/11/20 17:18:47 by pifourni         ###   ########.fr       */
+/*   Updated: 2025/11/21 11:06:46 by pifourni         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,8 @@
 # include <stdlib.h>
 
 char	**ft_split(char const *s, char c);
-size_t  ft_strlen(char *s);
+size_t	ft_strlen(char *s);
 int		error1(int fd1, int fd2, char *err);
-int     error2(int fd1, int fd2, char *err, pid_t pid);
+int		error2(int fd1, int fd2, char *err, pid_t pid);
 
 #endif

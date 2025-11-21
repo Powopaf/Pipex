@@ -6,13 +6,13 @@
 /*   By: pifourni <pifourni@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/20 01:24:36 by pifourni          #+#    #+#             */
-/*   Updated: 2025/11/20 23:25:03 by pifourni         ###   ########.fr       */
+/*   Updated: 2025/11/21 11:07:50 by pifourni         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-static void	exec_cmd(char* cmd, char **arg, char **envp)
+static void	exec_cmd(char *cmd, char **arg, char **envp)
 {
 	int	i;
 
@@ -62,7 +62,7 @@ static void	command2(char *file2, char *cmd2, char **envp, int pip[2])
 	if (!cmd || !*cmd)
 	{
 		write(2, "\x1b[91mERROR: ft_split(cmd2)\x1b[0m\n",
-		ft_strlen("\x1b[91mERROR: ft_split(cmd2)\x1b[0m\n"));
+			ft_strlen("\x1b[91mERROR: ft_split(cmd2)\x1b[0m\n"));
 		exit(1);
 	}
 	exec_cmd(cmd[0], cmd, envp);
@@ -110,7 +110,7 @@ static void	command1(char *file1, char *cmd1, char **envp, int pip[2])
 	exit(1);
 }
 
-int	main(int argc, char **argv, char** envp)
+int	main(int argc, char **argv, char **envp)
 {
 	int		pip[2];
 	pid_t	pid1;

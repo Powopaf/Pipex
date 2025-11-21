@@ -6,18 +6,18 @@
 /*   By: pifourni <pifourni@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/20 23:07:49 by pifourni          #+#    #+#             */
-/*   Updated: 2025/11/20 23:07:50 by pifourni         ###   ########.fr       */
+/*   Updated: 2025/11/21 11:08:46 by pifourni         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pipex.h"
 
-size_t  ft_strlen(char *s)
+size_t	ft_strlen(char *s)
 {
-    size_t  i;
+	size_t	i;
 
-    i = 0;
-    while (s[i])
-        i++;
-    return (i);
+	i = 0;
+	while (s[i])
+		i++;
+	return (i);
 }

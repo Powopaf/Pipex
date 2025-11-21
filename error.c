@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   utils.c                                            :+:      :+:    :+:   */
+/*   error.c                                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: pifourni <pifourni@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/11/20 14:17:29 by pifourni          #+#    #+#             */
-/*   Updated: 2025/11/20 17:18:37 by pifourni         ###   ########.fr       */
+/*   Updated: 2025/11/21 11:07:00 by pifourni         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ int	error1(int fd1, int fd2, char *err)
 	return (1);
 }
 
-int error2(int fd1, int fd2, char *err, pid_t pid)
+int	error2(int fd1, int fd2, char *err, pid_t pid)
 {
 	perror(err);
 	close(fd1);
