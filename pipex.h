@@ -25,5 +25,6 @@ char	**ft_split(char const *s, char c);
 size_t	ft_strlen(char *s);
 int		error1(int fd1, int fd2, char *err);
 int		error2(int fd1, int fd2, char *err, pid_t pid);
+char	*ft_strjoin(char const *s1, char const *s2)
 
 #endif
