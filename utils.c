@@ -12,71 +12,74 @@
 
 #include "pipex.h"
 
-void	free_paths(char **paths)
+static void	free_paths(char **paths, char *p0, char *p1)
 {
 	size_t	i;
 
-	i = 0;
-	while (paths[i] != NULL)
+	if (paths != NULL)
 	{
-		free(paths[i]);
-		i++;
+		i = 0;
+		while (paths[i] != NULL)
+		{
+			free(paths[i]);
+			i++;
+		}
+		free(paths);
 	}
-	free(paths);
+	if (p0)
+		free(p0);
+	if (p1)
+		free(p1);
+}
+
+static char	*try_path(char *dir, char *cmd, char **paths)
+{
+	char	*p0;
+	char	*p1;
+
+	p0 = ft_strjoin(dir, "/");
+	if (!p0)
+	{
+		free_paths(paths, NULL, NULL);
+		return (werror("\x1b[91mERROR: ft_strjoin(p0)\x1b[0m\n"));
+	}
+	p1 = ft_strjoin(p0, cmd);
+	if (!p1)
+	{
+		free_paths(paths, p0, NULL);
+		return (werror("\x1b[91mERROR: ft_strjoin(p1)\x1b[0m\n"));
+	}
+	if (access(p1, X_OK) == 0)
+	{
+		free_paths(paths, p0, NULL);
+		return (p1);
+	}
+	free_paths(NULL, p0, p1);
+	return (NULL);
 }
 
 char	*path(char *cmd, char **envp)
 {
 	char	**paths;
 	size_t	i;
-	char	*p0;
-	char	*p1;
-	int		fd;
+	char	*res;
 
 	i = 0;
-	while (envp[i] != NULL && ft_strncmp("PATH=", envp[i], 5) != 0)
+	while (envp[i] && ft_strncmp("PATH=", envp[i], 5))
 		i++;
+	if (!envp[i])
+		return (werror("\x1b[91mERROR: PATH not found\x1b[0m\n"));
 	paths = ft_split(envp[i] + 5, ':');
 	if (!paths || !paths[0])
-	{
-		write(2, "\x1b[91mERROR: ft_split(PATH)\x1b[0m\n",
-			ft_strlen("\x1b[91mERROR: ft_split(PATH)\x1b[0m\n"));
-		return (NULL);
-	}
+		return (werror("\x1b[91mERROR: PATH not found\x1b[0m\n"));
 	i = 0;
-	while (paths[i] != NULL)
+	while (paths[i])
 	{
-		p0 = ft_strjoin(paths[i], "/");
-		if (p0 == NULL)
-		{
-			write(2, "\x1b[91mERROR: ft_strjoin(p0)\x1b[0m\n",
-				ft_strlen("\x1b[91mERROR: ft_strjoin(p0)\x1b[0m\n"));
-			free_paths(paths);
-			return (NULL);
-		}
-		p1 = ft_strjoin(p0, cmd);
-		if (p1 == NULL)
-		{
-			write(2, "\x1b[91mERROR: ft_strjoin(p1)\x1b[0m\n",
-				ft_strlen("\x1b[91mERROR: ft_strjoin(p1)\x1b[0m\n"));
-			free(p0);
-			free_paths(paths);
-			return (NULL);
-		}
-		fd = open(p1, O_RDONLY);
-		if (fd != -1)
-		{
-			close(fd);
-			free(p0);
-			free_paths(paths);
-			return (p1);
-		}
-		free(p0);
-		free(p1);
+		res = try_path(paths[i], cmd, paths);
+		if (res)
+			return (res);
 		i++;
 	}
-	free_paths(paths);
-	write(2, "\x1b[91mERROR: command not found\x1b[0m\n",
-		ft_strlen("\x1b[91mERROR: command not found\x1b[0m\n"));
-	return (NULL);
+	free_paths(paths, NULL, NULL);
+	return (werror("\x1b[91mERROR: Command not found in PATH\x1b[0m\n"));
 }

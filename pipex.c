@@ -28,6 +28,13 @@ static void	exec_cmd(char *cmd, char **arg, char **envp)
 	exit(1);
 }
 
+void	close_pipes(int pip[2], int fd)
+{
+	close(fd);
+	close(pip[0]);
+	close(pip[1]);
+}
+
 static void	command2(char *file2, char *cmd2, char **envp, int pip[2])
 {
 	int		fd;
@@ -40,24 +47,10 @@ static void	command2(char *file2, char *cmd2, char **envp, int pip[2])
 		exit(1);
 	}
 	if (dup2(pip[0], STDIN_FILENO) == -1)
-	{
-		perror("\x1b[91mError: dup2(pip0, in)\x1b[0m");
-		close(fd);
-		close(pip[0]);
-		close(pip[1]);
-		exit(1);
-	}
+		exit(error3("\x1b[91mError: dup2(pip, in)\x1b[0m", fd, pip));
 	if (dup2(fd, STDOUT_FILENO) == -1)
-	{
-		perror("\x1b[91mError: dup2(fd, out)\x1b[0m");
-		close(fd);
-		close(pip[0]);
-		close(pip[1]);
-		exit(1);
-	}
-	close(fd);
-	close(pip[0]);
-	close(pip[1]);
+		exit(error3("\x1b[91mError: dup2(fd, out)\x1b[0m", fd, pip));
+	close_pipes(pip, fd);
 	cmd = ft_split(cmd2, ' ');
 	if (!cmd || !*cmd)
 	{
@@ -81,24 +74,10 @@ static void	command1(char *file1, char *cmd1, char **envp, int pip[2])
 		exit(1);
 	}
 	if (dup2(fd, STDIN_FILENO) == -1)
-	{
-		perror("\x1b[91mError: dup2(fd, in)\x1b[0m");
-		close(fd);
-		close(pip[0]);
-		close(pip[1]);
-		exit(1);
-	}
+		exit(error3("\x1b[91mError: dup2(fd, in)\x1b[0m", fd, pip));
 	if (dup2(pip[1], STDOUT_FILENO) == -1)
-	{
-		perror("\x1b[91mError: dup2(pip, out)\x1b[0m");
-		close(fd);
-		close(pip[0]);
-		close(pip[1]);
-		exit(1);
-	}
-	close(fd);
-	close(pip[0]);
-	close(pip[1]);
+		exit(error3("\x1b[91mError: dup2(pip, out)\x1b[0m", fd, pip));
+	close_pipes(pip, fd);
 	cmd = ft_split(cmd1, ' ');
 	if (!cmd || !*cmd)
 	{
@@ -117,23 +96,18 @@ int	main(int argc, char **argv, char **envp)
 	pid_t	pid2;
 
 	if (argc != 5)
-	{
-		write(2, "Usage: ./pipex <file1> <cmd1> <cmd2> <file2>\n", 46);
-		return (1);
-	}
+		return (write(2,
+				"Usage: ./pipex <file1> <cmd1> <cmd2> <file2>\n", 46), 1);
 	if (pipe(pip) == -1)
-	{
-		perror("\x1b[91mError: pipe()\x1b[0m");
-		exit(1);
-	}
+		return (errorp("\x1b[91mError: pipe()\x1b[0m"));
 	pid1 = fork();
 	if (pid1 == -1)
-		exit(error1(pip[0], pip[1], "\x1b[91mError: first fork()\x1b[0m"));
+		exit(error1(pip[1], pip[0], "\x1b[91mError: first fork()\x1b[0m"));
 	if (pid1 == 0)
 		command1(argv[1], argv[2], envp, pip);
 	pid2 = fork();
 	if (pid2 == -1)
-		exit(error2(pip[0], pip[1], "\x1b[91mError: second fork()\x1b[0m", pid1));
+		exit(error2(pip, "\x1b[91mError: second fork()\x1b[0m", pid1));
 	if (pid2 == 0)
 		command2(argv[4], argv[3], envp, pip);
 	close(pip[0]);

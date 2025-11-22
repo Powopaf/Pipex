@@ -23,7 +23,10 @@
 # include "libft/libft.h"
 
 int		error1(int fd1, int fd2, char *err);
-int		error2(int fd1, int fd2, char *err, pid_t pid);
+int		error2(int pip[2], char *err, pid_t pid);
 char	*path(char *cmd, char **envp);
+void	*werror(const char *msg);
+int		error3(char *msg, int fd1, int pip[2]);
+int		errorp(char *msg);
 
 #endif
