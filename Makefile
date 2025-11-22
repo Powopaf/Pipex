@@ -13,8 +13,8 @@
 .PHONY: all clean fclean re
 
 CC = cc
-CFLAGS = -Wall -Wextra -Werror -g -fsanitize=address
-LIB = -fsanitize=address libft/libft.a
+CFLAGS = -Wall -Wextra -Werror -g
+LIB = libft/libft.a
 SRC = ./pipex.c \
 	  ./utils.c \
 	  ./error.c

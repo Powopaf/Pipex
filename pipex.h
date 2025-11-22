@@ -28,5 +28,6 @@ char	*path(char *cmd, char **envp);
 void	*werror(const char *msg);
 int		error3(char *msg, int fd1, int pip[2]);
 int		errorp(char *msg);
+int		exit_status(pid_t pid1, pid_t pid2);
 
 #endif

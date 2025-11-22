@@ -18,17 +18,32 @@ RESET="\033[0m"
 CHECK_MARK="✓"
 CROSS_MARK="✗"
 
+# ------------- VALGRIND CONFIG -------------
+# Set USE_VALGRIND=0 if you want to disable it quickly
+USE_VALGRIND=1
+VALGRIND="valgrind"
+VALGRIND_OPTS="--leak-check=full --show-leak-kinds=all --track-origins=yes --quiet"
+
 TOTAL=0
 PASSED=0
 FAILED=0
 
+# Check if valgrind is available
+if [ "$USE_VALGRIND" -eq 1 ]; then
+    if ! command -v "$VALGRIND" >/dev/null 2>&1; then
+        printf "%b[WARN]%b valgrind not found, disabling valgrind checks\n" "$YELLOW" "$RESET"
+        USE_VALGRIND=0
+    else
+        printf "%b[INFO]%b valgrind checks enabled\n" "$BLUE" "$RESET"
+    fi
+fi
+
 # ------------- CLEANUP -------------
 cleanup() {
-    printf "%b[CLEANUP]%b removing test files\n" "$BLUE" "$RESET"
+    printf "%b[CLEANUP]%b removing test files (keeping *.vg.log)\n" "$BLUE" "$RESET"
     rm -f "$INFILE" "$INFILE_EMPTY"
     rm -f "${TEST_PREFIX}"ref* "${TEST_PREFIX}"out* "${TEST_PREFIX}"*.err 2>/dev/null
 }
-trap cleanup EXIT
 
 # ------------- HELPERS -------------
 
@@ -43,17 +58,32 @@ run_ok_test() {
     printf "%b[TEST %2d]%b %s\n" "$BLUE" "$TOTAL" "$RESET" "$desc"
 
     rm -f "$ref_file" "$out_file"
+    local vg_log=""
 
     # reference with real shell pipeline
     eval "$shell_cmd"
 
-    # run your pipex
-    eval "$pipex_cmd"
+    # run your pipex (maybe under valgrind)
+    if [ "$USE_VALGRIND" -eq 1 ]; then
+        vg_log="${out_file}.vg.log"
+        rm -f "$vg_log"
+        eval "$VALGRIND $VALGRIND_OPTS --log-file=$vg_log $pipex_cmd"
+    else
+        eval "$pipex_cmd"
+    fi
     status=$?
 
     if [ "$status" -ne 0 ]; then
         printf "  %b%s%b exit code %d (expected 0)\n" "$RED" "$CROSS_MARK FAIL" "$RESET" "$status"
         FAILED=$((FAILED + 1))
+        # still show valgrind info if we have it
+        if [ "$USE_VALGRIND" -eq 1 ] && [ -n "$vg_log" ] && [ -f "$vg_log" ]; then
+            if grep -q "ERROR SUMMARY: 0 errors" "$vg_log"; then
+                printf "  %b[VALGRIND]%b no mem errors (see %s)\n" "$GREEN" "$RESET" "$vg_log"
+            else
+                printf "  %b[VALGRIND]%b memory errors detected (see %s)\n" "$RED" "$RESET" "$vg_log"
+            fi
+        fi
         return
     fi
 
@@ -65,6 +95,19 @@ run_ok_test() {
         echo "  --- diff ---"
         diff -u "$ref_file" "$out_file" || true
         FAILED=$((FAILED + 1))
+    fi
+
+    # Valgrind summary (does NOT affect PASS/FAILED counters, just info)
+    if [ "$USE_VALGRIND" -eq 1 ] && [ -n "$vg_log" ] && [ -f "$vg_log" ]; then
+        if grep -q "ERROR SUMMARY: 0 errors" "$vg_log"; then
+            if grep -q "definitely lost: 0 bytes" "$vg_log"; then
+                printf "  %b[VALGRIND]%b no leaks, no mem errors (see %s)\n" "$GREEN" "$RESET" "$vg_log"
+            else
+                printf "  %b[VALGRIND]%b no mem errors but some leaks (see %s)\n" "$YELLOW" "$RESET" "$vg_log"
+            fi
+        else
+            printf "  %b[VALGRIND]%b memory errors detected (see %s)\n" "$RED" "$RESET" "$vg_log"
+        fi
     fi
 }
 
@@ -78,27 +121,48 @@ run_error_test() {
 
     rm -f "$out_file"
     err_file="${out_file}.err"
+    local vg_log=""
 
-    eval "$pipex_cmd" 2> "$err_file"
+    # run pipex (maybe under valgrind), capture stderr
+    if [ "$USE_VALGRIND" -eq 1 ]; then
+        vg_log="${out_file}.vg.log"
+        rm -f "$vg_log"
+        eval "$VALGRIND $VALGRIND_OPTS --log-file=$vg_log $pipex_cmd 2> $err_file"
+    else
+        eval "$pipex_cmd" 2> "$err_file"
+    fi
     status=$?
 
     if [ "$status" -eq 0 ]; then
         printf "  %b%s%b exit code 0 (expected non-zero)\n" "$RED" "$CROSS_MARK FAIL" "$RESET"
         FAILED=$((FAILED + 1))
-        return
-    fi
-
-    if [ -s "$out_file" ]; then
-        printf "  %b%s%b outfile is not empty (expected empty)\n" "$RED" "$CROSS_MARK FAIL" "$RESET"
-        FAILED=$((FAILED + 1))
     else
-        printf "  %b%s%b non-zero exit (%d) and empty outfile (OK)\n" "$GREEN" "$CHECK_MARK PASS" "$RESET" "$status"
-        PASSED=$((PASSED + 1))
+        if [ -s "$out_file" ]; then
+            printf "  %b%s%b outfile is not empty (expected empty)\n" "$RED" "$CROSS_MARK FAIL" "$RESET"
+            FAILED=$((FAILED + 1))
+        else
+            printf "  %b%s%b non-zero exit (%d) and empty outfile (OK)\n" "$GREEN" "$CHECK_MARK PASS" "$RESET" "$status"
+            PASSED=$((PASSED + 1))
+        fi
     fi
 
+    # show stderr from program + valgrind
     if [ -s "$err_file" ]; then
         printf "  %bstderr:%b\n" "$YELLOW" "$RESET"
         sed 's/^/    /' "$err_file"
+    fi
+
+    # Valgrind summary
+    if [ "$USE_VALGRIND" -eq 1 ] && [ -n "$vg_log" ] && [ -f "$vg_log" ]; then
+        if grep -q "ERROR SUMMARY: 0 errors" "$vg_log"; then
+            if grep -q "definitely lost: 0 bytes" "$vg_log"; then
+                printf "  %b[VALGRIND]%b no leaks, no mem errors (see %s)\n" "$GREEN" "$RESET" "$vg_log"
+            else
+                printf "  %b[VALGRIND]%b no mem errors but some leaks (see %s)\n" "$YELLOW" "$RESET" "$vg_log"
+            fi
+        else
+            printf "  %b[VALGRIND]%b memory errors detected (see %s)\n" "$RED" "$RESET" "$vg_log"
+        fi
     fi
 }
 
@@ -111,7 +175,6 @@ if [ ! -f Makefile ] && [ ! -f makefile ]; then
     exit 1
 fi
 
-# You can change 'make' to 'make re' if you prefer a full rebuild:
 make
 BUILD_STATUS=$?
 
@@ -232,6 +295,6 @@ if [ "$FAILED" -eq 0 ]; then
 else
     printf "  %bSome tests failed%b (%d/%d passed, %d failed)\n" "$RED" "$RESET" "$PASSED" "$TOTAL" "$FAILED"
 fi
-rm -f "${TEST_PREFIX}"ref* "${TEST_PREFIX}"out* "${TEST_PREFIX}"*.err 2>/dev/null
+
 make fclean
-echo "  (All temporary files have been cleaned up.)"
+cleanup

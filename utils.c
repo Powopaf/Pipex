@@ -58,12 +58,25 @@ static char	*try_path(char *dir, char *cmd, char **paths)
 	return (NULL);
 }
 
+static int	full_path(char *cmd)
+{
+	if (ft_strchr(cmd, '/'))
+	{
+		if (access(cmd, X_OK) == 0)
+			return (0);
+		return (1);
+	}
+	return (1);
+}
+
 char	*path(char *cmd, char **envp)
 {
 	char	**paths;
 	size_t	i;
 	char	*res;
 
+	if (!full_path(cmd))
+		return (cmd);
 	i = 0;
 	while (envp[i] && ft_strncmp("PATH=", envp[i], 5))
 		i++;
@@ -82,4 +95,26 @@ char	*path(char *cmd, char **envp)
 	}
 	free_paths(paths, NULL, NULL);
 	return (werror("\x1b[91mERROR: Command not found in PATH\x1b[0m\n"));
+}
+
+int	exit_status(pid_t pid1, pid_t pid2)
+{
+	int	wstatus1;
+	int	wstatus2;
+	int	exit1;
+	int	exit2;
+
+	exit1 = 0;
+	exit2 = 0;
+	waitpid(pid1, &wstatus1, 0);
+	waitpid(pid2, &wstatus2, 0);
+	if (WIFEXITED(wstatus1))
+		exit1 = WEXITSTATUS(wstatus1);
+	if (WIFEXITED(wstatus2))
+		exit2 = WEXITSTATUS(wstatus2);
+	if (exit2 != 0)
+		return (exit2);
+	if (exit1 == 126 || exit1 == 127)
+		return (exit1);
+	return (0);
 }

@@ -14,9 +14,22 @@
 
 static void	exec_cmd(char *cmd, char **arg, char **envp)
 {
-	int	i;
+	int		i;
+	char	*full;
 
-	execve(path(cmd, envp), arg, envp);
+	full = path(cmd, envp);
+	if (!full)
+	{
+		i = 0;
+		while (arg[i] != NULL)
+		{
+			free(arg[i]);
+			i++;
+		}
+		free(arg);
+		exit(127);
+	}
+	execve(full, arg, envp);
 	perror("\x1b[91mError: execve()\x1b[0m");
 	i = 0;
 	while (arg[i] != NULL)
@@ -25,7 +38,7 @@ static void	exec_cmd(char *cmd, char **arg, char **envp)
 		i++;
 	}
 	free(arg);
-	exit(1);
+	exit(126);
 }
 
 void	close_pipes(int pip[2], int fd)
@@ -71,7 +84,7 @@ static void	command1(char *file1, char *cmd1, char **envp, int pip[2])
 	if (fd == -1)
 	{
 		perror("\x1b[91mError: open(file1)\x1b[0m");
-		exit(1);
+		exit(126);
 	}
 	if (dup2(fd, STDIN_FILENO) == -1)
 		exit(error3("\x1b[91mError: dup2(fd, in)\x1b[0m", fd, pip));
@@ -112,7 +125,5 @@ int	main(int argc, char **argv, char **envp)
 		command2(argv[4], argv[3], envp, pip);
 	close(pip[0]);
 	close(pip[1]);
-	waitpid(pid1, NULL, 0);
-	waitpid(pid2, NULL, 0);
-	return (0);
+	return (exit_status(pid1, pid2));
 }
