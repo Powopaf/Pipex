@@ -16,10 +16,6 @@ You can test the code with the `test.sh` file. It also run valgrind to not run v
 
 ## The code
 
- 
-### How the program works (concise)
-
-
 - **Why two forks?**
   - The program needs two child processes so each command runs separately: the
     first child reads from the input file and writes to the pipe; the second
